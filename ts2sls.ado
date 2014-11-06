@@ -1,4 +1,4 @@
-*! version 0.1 November 5, 2014 @ 20:44:21
+*! version 0.1 November 6, 2014 @ 12:18:25
 /*
 ts2sls.ado
 J. SHRADER
@@ -42,7 +42,7 @@ version 12
 
    // Pull correct sample
    marksample touse
-	markout `touse' `lhs' `exog' `inst' `endog'
+	markout `touse' `lhs' `exog' `inst'
 
    // Populate lists based on fully expanded list
 	local totexp `endog' `exog' `inst'
@@ -67,7 +67,7 @@ version 12
 	// Remove colinear variables using the method from ivregress
    tempvar _one
    gen byte `_one' = 1
-   CheckCollin `lhs' if `touse' [iw=`_one'], ///
+   CheckCollin `lhs' if `touse' & `group'==2 [iw=`_one'], ///
      endog(`endog') exog(`exog') inst(`inst')
 	local endog `s(endog)'
 	local exog `s(exog)'
@@ -91,11 +91,10 @@ version 12
    // 2" and the reduced form data "group 1"
    // Need method to make sure that group only takes 2 values
    quietly: tab `group'
-   // Note that the groups also take into account `touse'
    tempvar _group1
-   gen byte `_group1' = (`group' == 1 & `touse' == 1)
+   gen byte `_group1' = (`group' == 1)
    tempvar _group2
-   gen byte `_group2' = (`group' == 2 & `touse' == 1)
+   gen byte `_group2' = (`group' == 2)
 
    // Fill in the rest of the required elements for doFirst
    // These should probably be cleaned up in the future
@@ -111,7 +110,7 @@ version 12
    local vcehaclag = ""
 
    // We are not weighting, but we have to do some handling of this to appease
-   // the Stata written functions
+   // the Stata-written functions
    tempvar normwt 
    qui gen double `normwt' = 1 if `touse'
    qui count if `_group1'
@@ -126,12 +125,16 @@ version 12
 
    // First stage
    // This is another function stolen from ivregress.ado
-   qui replace `touse' = 0 if `_group2' == 0
+   // Use only Group 2
+   tempvar touse2
+   gen `touse2' = (`touse' & `group' == 2)
+   tempvar touse1
+   gen `touse1' = (`touse' & `group' == 1)
    if "`first'"!= "" {
       doFirst `"`endog'"' `"`endogname'"' ///
         `"`exog' `inst'"' ///
         `"`exogname' `instname'"' ///
-        `"`touse'"' ///
+        `"`touse2'"' ///
         "" "" `"`normwt'"'  `"`normN2'"' ///
         `"`timevar'"' `"`tvardelta'"' `"`noconstant'"' `"`hasconstant'"' ///
         `"level(95)"' `"`vcetype'"' `"`vceclustvar'"' `"`vcehac'"'	///
@@ -141,13 +144,12 @@ version 12
       qui doFirst `"`endog'"' `"`endogname'"' ///
         `"`exog' `inst'"' ///
         `"`exogname' `instname'"' ///
-        `"`touse'"' ///
+        `"`touse2'"' ///
         "" "" `"`normwt'"'  `"`normN2'"' ///
         `"`timevar'"' `"`tvardelta'"' `"`noconstant'"' `"`hasconstant'"' ///
         `"level(95)"' `"`vcetype'"' `"`vceclustvar'"' `"`vcehac'"'	///
         `"`vcehaclag'"'
    }
-   matrix list e(nu2)
    tempname nu2
    matrix `nu2' = e(nu2)
    
@@ -156,13 +158,9 @@ version 12
 
    // Reduced form and calculate 2SLS
    // This could all be done in one Mata go to improve performance, probably
-   qui replace `touse' = 1 if `_group2' == 0
-   qui replace `touse' = 0 if `_group1' == 0
-   qui regress `lhs' `instfs' if `touse', noconstant
+   regress `lhs' `instfs' if `touse' & `group'==1, noconstant
    tempvar _u1
-   tempname u1
    qui predict `_u1' if `touse', resid
-   mkmat `_u1' if `touse', matrix(`u1')
    mata:_2s_vcv()
 
 
@@ -609,10 +607,10 @@ mata:
       endog = st_local("endog")
       endogfs = st_local("endogfs")
       instfs = st_local("instfs")
-      _group2 = st_local("_group2")
-      st_view(endo,.,tokens(endog), _group2)
-      st_view(X2=0,.,tokens(endogfs), _group2)
-      st_view(Z2=0,.,tokens(instfs), _group2)
+      touse2 = st_local("touse2")
+      st_view(endo=0,.,tokens(endog), touse2)
+      st_view(X2=0,.,tokens(endogfs), touse2)
+      st_view(Z2=0,.,tokens(instfs), touse2)
       n2 = rows(Z2)
       m = cols(Z2)
       nu2 = st_matrix(st_local("nu2"))
@@ -626,7 +624,7 @@ mata:
       st_matrix("Sigma_nu", Sigma_nu)
       st_matrix("Z2pZ2", Z2pZ2)
       st_matrix("Z2pX2", Z2pX2)
-      Sigma_nu
+      //Sigma_nu
    }
 end
 mata:
@@ -639,21 +637,23 @@ mata:
       n1l = st_local("normN1")
 
       // Bring in instrument for Z1, which includes controls
-      _group1 = st_local("_group1")
-      _group2 = st_local("_group2")
+      touse2 = st_local("touse2")
+      touse1 = st_local("touse1")
       instfs = st_local("instfs")
       lhs = st_local("lhs")
-      st_view(Z2=0,.,tokens(instfs), _group2)
-      st_view(Z1=0,.,tokens(instfs), _group1)
-      st_view(y1=0,.,tokens(lhs), _group1)
+      _u1 = st_local("_u1")
+      st_view(Z2=0,.,tokens(instfs), touse2)
+      st_view(Z1=0,.,tokens(instfs), touse1)
+      st_view(y1=0,.,tokens(lhs), touse1)
+      st_view(u1=0,.,_u1, touse1)
       n1 = rows(y1)
       n2 = rows(Z2)
       m = cols(Z2)
       _alpha = n1/n2
+      _alpha
+      _alpha = .01
       Xhat1 = Z1*invsym(Z2pZ2)*Z2pX2
       beta = invsym(Xhat1'*Xhat1)*Xhat1'*y1
-      u1l = st_local("u1")
-      u1 = st_matrix(u1l)
       sigma11 = u1'*u1/(n1 - m)
       V = invsym(Z2pX2'*invsym((sigma11 + _alpha*beta'*Sigma_nu*beta)*Z2pZ2)*Z2pX2)
       se=sqrt(diagonal(V))
