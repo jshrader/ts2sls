@@ -1,4 +1,4 @@
-*! version 0.1 November 6, 2014 @ 12:18:25
+*! version 0.1 November 6, 2014 @ 12:57:54
 /*
 ts2sls.ado
 J. SHRADER
@@ -650,8 +650,6 @@ mata:
       n2 = rows(Z2)
       m = cols(Z2)
       _alpha = n1/n2
-      _alpha
-      _alpha = .01
       Xhat1 = Z1*invsym(Z2pZ2)*Z2pX2
       beta = invsym(Xhat1'*Xhat1)*Xhat1'*y1
       sigma11 = u1'*u1/(n1 - m)
