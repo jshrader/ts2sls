@@ -1,4 +1,4 @@
-*! version 0.1 November 4, 2014 @ 16:20:32
+*! version 0.1 November 5, 2014 @ 20:44:21
 /*
 ts2sls.ado
 J. SHRADER
@@ -38,7 +38,7 @@ version 12
    local inst `s(inst)'
    // Pass the rest to `0' to go into standard syntax
    local 0 `s(zero)'
-   syntax [if] [in] [, GROUP(varname) NOConstant FIRST] 
+   syntax [if] [in] , GROUP(varname) [NOConstant FIRST] 
 
    // Pull correct sample
    marksample touse
@@ -147,7 +147,11 @@ version 12
         `"level(95)"' `"`vcetype'"' `"`vceclustvar'"' `"`vcehac'"'	///
         `"`vcehaclag'"'
    }
+   matrix list e(nu2)
+   tempname nu2
+   matrix `nu2' = e(nu2)
    
+   //mata:_fs_vcv(`endog', `endogfs', `instfs', `_group2')
    mata:_fs_vcv()
 
    // Reduced form and calculate 2SLS
@@ -160,13 +164,81 @@ version 12
    qui predict `_u1' if `touse', resid
    mkmat `_u1' if `touse', matrix(`u1')
    mata:_2s_vcv()
-   //matrix list b
-   //matrix list se
-   
-   
 
-   // cleaning up Mata environment
-   matrix drop nu2 Z2pZ2 Z2pX2 Sigma_nu
+
+   matrix list beta
+   matrix list se
+
+   // Populate ereturn
+   //ereturn post beta V, esample(`touse')
+
+
+/*   // Output results
+   disp as txt " "
+   disp as txt "OLS REGRESSION"
+   disp as txt " "
+   disp as txt "SE CORRECTED FOR CROSS-SECTIONAL SPATIAL DEPENDANCE"
+   disp as txt "             AND PANEL-SPECIFIC SERIAL CORRELATION"
+   disp as txt " "
+   disp as txt "DEPENDANT VARIABLE: `Y'"
+   disp as txt "INDEPENDANT VARIABLES: `X'"
+   disp as txt " "
+   disp as txt "SPATIAL CORRELATION KERNAL CUTOFF: `distcutoff' KM"
+   
+   disp as txt "SERIAL CORRELATION KERNAL CUTOFF: `lagcutoff' PERIODS"
+
+   ereturn display // standard Stata regression table format
+
+   // displaying different SE if option selected
+
+if "`display'" == "display"{
+	disp as txt " "
+	disp as txt "STANDARD ERRORS UNDER OLS, WITH SPATIAL CORRECTION AND WITH SPATIAL AND SERIAL CORRECTION:"
+	estimates table OLS spatial spatHAC, b(%7.3f) se(%7.3f) t(%7.3f) stats(N r2) 	
+}
+
+if "`star'" == "star"{
+	disp as txt " "
+	disp as txt "STANDARD ERRORS UNDER OLS, WITH SPATIAL CORRECTION AND WITH SPATIAL AND SERIAL CORRECTION:"
+	estimates table OLS spatial spatHAC, b(%7.3f) star(0.10 0.05 0.01)
+}
+*/
+
+   /*
+   ts2sls price (mpg length = c.weight##c.weight) headroom, group(group) 
+   beta[4,1]
+            c1
+r1   2291.3394
+r2   610.95424
+r3  -1418.6874
+r4  -153205.72
+
+se[4,1]
+           c1
+r1  2194.2817
+r2  505.43445
+r3  1562.9277
+r4  139573.28
+*/
+   /*
+   . ts2sls price (mpg = c.weight##c.weight) headroom, group(group) 
+
+beta[3,1]
+            c1
+r1  -343.87479
+r2  -573.90742
+r3   15206.705
+
+se[3,1]
+           c1
+r1  73.661468
+r2  413.12677
+r3  2457.1873
+*/
+
+   // cleaning up a few matrices
+   //matrix dir
+   matrix drop Z2pZ2 Z2pX2 Sigma_nu
 end
 
 
@@ -340,7 +412,7 @@ program define doFirst, eclass
 	tokenize `endolst'
 	local i 1
 	tempvar endotmp
-
+   tempname _nu2
    while "``i''" != "" {
 		_ms_parse_parts ``i''
 		if r(omit)==1 {
@@ -359,13 +431,8 @@ program define doFirst, eclass
 		local rmse = e(rmse)
 		local r2 = e(r2)
       local r2a = e(r2_a)
-      tempname nu2t
-      tempvar _nu2t
-      qui predict `_nu2t' if `touse', resid
-      mkmat `_nu2t' if `touse', matrix(`nu2t')
-      // Access this from r(class) or whatever
-      //tempname nu2
-      mat nu2 = (nullmat(nu2), `nu2t')
+      // We need to keep the rmse from each run
+      mat `_nu2' = (nullmat(`_nu2'), `rmse'^2)
 
 		mat `V1' = e(V)
 		tempname noomit
@@ -430,6 +497,7 @@ program define doFirst, eclass
 		`vv' ///
 		mat rownames `V1' = `stripe'
 		eret post `b1' `V1', esample(`touse1') obs(`normN') buildfvinfo
+
 		eret scalar df_r = `dfr'
 		if "`vcetype'" != "" {		// test with new VCE
 			qui test `instnam'
@@ -473,7 +541,7 @@ program define doFirst, eclass
 		drop `endotmp'
 	}
 	di
-
+   eret matrix nu2=`_nu2'
 end
 
 // Taken from ivregress
@@ -547,16 +615,18 @@ mata:
       st_view(Z2=0,.,tokens(instfs), _group2)
       n2 = rows(Z2)
       m = cols(Z2)
-      nu2 = st_matrix("nu2")
+      nu2 = st_matrix(st_local("nu2"))
       zero_cols = cols(X2)-cols(endo)
-      if (zero_cols > 0) nu2 = (nu2, J(rows(nu2), zero_cols, 0));
+      if (zero_cols > 0) nu2 = (nu2, J(1, zero_cols, 0));
       
-      Sigma_nu = nu2'*nu2/(n2 - m)
+      //Sigma_nu = nu2'*nu2/(n2 - m)
+      Sigma_nu = I(cols(X2)):*nu2
       Z2pZ2 = Z2'*Z2
       Z2pX2 = Z2'*X2
       st_matrix("Sigma_nu", Sigma_nu)
       st_matrix("Z2pZ2", Z2pZ2)
       st_matrix("Z2pX2", Z2pX2)
+      Sigma_nu
    }
 end
 mata:
@@ -573,8 +643,6 @@ mata:
       _group2 = st_local("_group2")
       instfs = st_local("instfs")
       lhs = st_local("lhs")
-      lhs
-      instfs
       st_view(Z2=0,.,tokens(instfs), _group2)
       st_view(Z1=0,.,tokens(instfs), _group1)
       st_view(y1=0,.,tokens(lhs), _group1)
@@ -583,13 +651,13 @@ mata:
       m = cols(Z2)
       _alpha = n1/n2
       Xhat1 = Z1*invsym(Z2pZ2)*Z2pX2
-      b = invsym(Xhat1'*Xhat1)*Xhat1'*y1
+      beta = invsym(Xhat1'*Xhat1)*Xhat1'*y1
       u1l = st_local("u1")
       u1 = st_matrix(u1l)
       sigma11 = u1'*u1/(n1 - m)
-      V = invsym(Z2pX2'*invsym((sigma11 + _alpha*b'*Sigma_nu*b)*Z2pZ2)*Z2pX2)
+      V = invsym(Z2pX2'*invsym((sigma11 + _alpha*beta'*Sigma_nu*beta)*Z2pZ2)*Z2pX2)
       se=sqrt(diagonal(V))
-      st_matrix("b", b)
+      st_matrix("beta", beta)
       st_matrix("V", V)
       st_matrix("se", se)
    }
