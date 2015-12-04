@@ -5,7 +5,7 @@ replace group = 2 if group == 0
 replace mpg = . if group == 1
 // Make sure you are using the newest version of ts2sls
 capture program drop ts2sls
-copy ~/google_drive/bin/stata/ts2sls/ts2sls.ado ~/google_drive/bin/stata/ado/t/ts2sls.ado, replace
+copy ~/Dropbox/bin/stata/ts2sls/ts2sls.ado ~/Dropbox/bin/stata/ado/t/ts2sls.ado, replace
 // Test baseline: one instrument, one exogenous regressor
 ts2sls price (mpg = headroom) weight, group(group)
 ivregress 2sls price (mpg = headroom) weight if group == 2

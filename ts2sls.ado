@@ -1,4 +1,4 @@
-*! version 0.1 December 18, 2014 @ 11:59:11
+*! version 0.1 December 3, 2015 @ 20:14:15
 /*
 ts2sls.ado
 J. SHRADER
@@ -8,6 +8,14 @@ First Version: 2014/10/30
 Stata program to calculate two-sample two-stage least squares (TS2SLS) estimates.
 Math is based on Inoue and Solon (2005), although variable names more closely
 follow the shorter version published as Inoue and Solon (2010).
+
+Syntax
+ts2sls y (x = z) [if] [in], group(group_var) [noconstant]
+
+Where y is the outcome variable, x be the endogenous regressor, and z an exogenous
+instrument. I follow the notation of Inoue and Solon and call the data for
+estimating the reduced form (y as a function of z) "group 1" and the data for
+estimating the first stage (x as a function of z) "group 2". 
 
 Some of the code is taken more or less directly from Solomon Hsiang's
 ols_spatial_HAC.ado file.
@@ -42,7 +50,7 @@ version 12
 
    // Pull correct sample
    marksample touse
-	markout `touse' `lhs' `exog' `inst'
+	markout `touse' `inst'
 
    // Populate lists based on fully expanded list
 	local totexp `endog' `exog' `inst'
@@ -67,8 +75,8 @@ version 12
 	// Remove colinear variables using the method from ivregress
    tempvar _one
    gen byte `_one' = 1
-   CheckCollin `lhs' if `touse' & `group'==2 [iw=`_one'], ///
-     endog(`endog') exog(`exog') inst(`inst')
+   //CheckCollin `lhs' if `touse' & `group'==2 [iw=`_one'], ///
+   //  endog(`endog') exog(`exog') inst(`inst')
 	local endog `s(endog)'
 	local exog `s(exog)'
 	local inst `s(inst)'
@@ -158,7 +166,7 @@ version 12
 
    // Reduced form and calculate 2SLS
    // This could all be done in one Mata go to improve performance, probably
-   regress `lhs' `instfs' if `touse' & `group'==1, noconstant
+   qui regress `lhs' `instfs' if `touse' & `group'==1, noconstant
    tempvar _u1
    qui predict `_u1' if `touse', resid
    mata:_2s_vcv()
@@ -308,8 +316,8 @@ program CheckCollin, sclass
 	}
 
 	/* Now check for collinearities */
-	`vv' ///
-	_rmdcoll `varlist' `endog' `exog' `wgt' if `touse', `noconstant'
+	//`vv' ///
+	//_rmdcoll `varlist' `endog' `exog' `wgt' if `touse', `noconstant'
 	local totvarlist  `r(varlist)'
 	if "`r(k_omitted)'" == "" {
 		local both `r(varlist)'
@@ -339,8 +347,8 @@ program CheckCollin, sclass
 		local endog `endog_keep'
 		local exog `exog_keep'
 	}
-	`vv' ///
-	_rmcoll `inst', `expand' `noconstant'
+	//`vv' ///
+	//_rmcoll `inst', `expand' `noconstant'
 	local inst `r(varlist)'
 	if "`inst'" != "" & "`endog'`exog'" != "" {
 		if "`noconstant'"  == "" {
