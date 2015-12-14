@@ -1,26 +1,15 @@
 ts2sls
 ======
 
-Two-sample two-stage least squares estimation
 
-Currently, this is just a Stata ado file to calculate two-sample 2sls a la Inoue and Solon (2010).
-
-For the future:
-1. More numerically stable matrix calculations
-2. Formatted output
-3. Standard errors are not fully corrected in the case of multiple instruments
-4. Perfect collinearity checking is broken
 
 ### Description 
 
-ts2sls.ado
-J. SHRADER
-jgshrade@ucsd.edu
-First Version: 2014/10/30
+ts2sls.ado v0.1.1
 
-Stata program to calculate two-sample two-stage least squares (TS2SLS) estimate . Math is based on Inoue and Solon (2005), although variable names more closely follow the shorter version published as Inoue and Solon (2010).
+JEFFREY SHRADER
 
-Some of the code is taken more or less directly from Solomon Hsiang's ols_spatial_HAC.ado file.
+Stata program to calculate two-sample two-stage least squares (TS2SLS) estimates. Math is based on Inoue and Solon (2005), although variable names more closely follow the shorter version published as Inoue and Solon (2010).
 
 If you find errors, please let me know.
 
@@ -37,6 +26,18 @@ Your data needs to be stacked, so if you are estimating from two different datas
     1    |    y    |    .    |    z_1
     2    |    .    |    x    |    z_2
 ```
+
+### Installation
+You can download ts2sls.ado and place it in the t/ directory of your [personal ado folder](http://www.stata.com/support/faqs/programming/personal-ado-directory/). To find your personal ado folder, issue the command `sysdir` to Stata.
+
+Once this code is reasonably complete, I can put it into a package.
+
+### For the future
+
+1. More numerically stable matrix calculations
+2. Formatted output
+3. Standard errors are not fully corrected in the case of multiple instruments
+4. Perfect collinearity checking is broken
 
 ### References 
 
