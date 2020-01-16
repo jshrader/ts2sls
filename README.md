@@ -19,7 +19,7 @@ ts2sls y (x = z) [if] [in], group(group_var) [noconstant]
 
 Where y is the outcome variable, x is the endogenous regressor, and z is an exogenous instrument. I follow the notation of Inoue and Solon and call the data for estimating the reduced form (y as a function of z) "group 1" and the data for estimating the first stage (x as a function of z) "group 2".
 
-Your data needs to be stacked, so if you are estimating from two different datasets, append them, then specify "group" appropriately. The dataset should look like this:
+Your datasets need to be stacked, so if you are estimating from two different datasets, append them, then specify "group" appropriately. The dataset must look like this:
 ```
   Group  |    Y    |    X    |    Z   
 ---------+---------+---------+---------
