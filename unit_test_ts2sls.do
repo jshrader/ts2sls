@@ -4,7 +4,7 @@ expand 2, gen(group)
 replace group = 2 if group == 0
 replace mpg = . if group == 1
 // Make sure you are using the newest version of ts2sls
-capture program drop ts2sls
+//capture program drop ts2sls
 //copy ~/Dropbox/bin/stata/ts2sls/ts2sls.ado ~/Dropbox/bin/stata/ado/t/ts2sls.ado, replace
 // Test baseline: one instrument, one exogenous regressor
 ts2sls price (mpg = headroom) weight, group(group)
