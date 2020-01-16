@@ -17,9 +17,9 @@ If you find errors, please let me know.
 
 ts2sls y (x = z) [if] [in], group(group_var) [noconstant]
 
-Where y is the outcome variable, x be the endogenous regressor, and z an exogenous instrument. I follow the notation of Inoue and Solon and call the data for estimating the reduced form (y as a function of z) "group 1" and the data for estimating the first stage (x as a function of z) "group 2".
+Where y is the outcome variable, x is the endogenous regressor, and z is an exogenous instrument. I follow the notation of Inoue and Solon and call the data for estimating the reduced form (y as a function of z) "group 1" and the data for estimating the first stage (x as a function of z) "group 2".
 
-Your data needs to be stacked, so if you are estimating from two different datasets, append them, then specify "group" appropriately. The dataset should look like this:
+Your datasets need to be stacked, so if you are estimating from two different datasets, append them, then specify "group" appropriately. The dataset must look like this:
 ```
   Group  |    Y    |    X    |    Z   
 ---------+---------+---------+---------
@@ -38,6 +38,7 @@ Once this code is reasonably complete, I can put it into a package.
 2. Formatted output
 3. Standard errors are not fully corrected in the case of multiple instruments
 4. Perfect collinearity checking is broken
+5. Missing values in the dependent variable will throw an error--drop missing LHS observations before running
 
 ### References 
 
