@@ -1,11 +1,9 @@
 ts2sls
 ======
 
-
-
 ### Description 
 
-ts2sls.ado v0.1.1
+ts2sls.ado v0.2.0
 
 JEFFREY SHRADER
 
@@ -28,17 +26,19 @@ Your datasets need to be stacked, so if you are estimating from two different da
 ```
 
 ### Installation
-You can download ts2sls.ado and place it in the t/ directory of your [personal ado folder](http://www.stata.com/support/faqs/programming/personal-ado-directory/). To find your personal ado folder, issue the command `sysdir` to Stata.
+You can download ts2sls.ado ([click here](https://github.com/jshrader/ts2sls/archive/master.zip) and place it where Stata can find ado files. For example, you can put it in the t/ directory of your [personal ado folder](http://www.stata.com/support/faqs/programming/personal-ado-directory/). To find your ado folders, issue the command `sysdir` to Stata. Once you have put the code in one of your ado directories, you should simply be able to run it by typing "ts2sls ..." into Stata.
 
 Once this code is reasonably complete, I can put it into a package.
+
+#### Debugging
+People trying to run this command occasionally experience the error "< is not a valid command name". If this error occurs, it means you have downloaded an html page rather than the ts2sls.ado file. If you click [this link](https://github.com/jshrader/ts2sls/archive/master.zip), it will download the correct file. 
 
 ### For the future
 
 1. More numerically stable matrix calculations
-2. Formatted output
-3. Standard errors are not fully corrected in the case of multiple instruments
-4. Perfect collinearity checking is broken
-5. Missing values in the dependent variable will throw an error--drop missing LHS observations before running
+2. Standard errors are not fully corrected in the case of multiple instruments
+3. Perfect collinearity checking is broken
+4. Missing values in the dependent variable will throw an error--drop missing LHS observations before running
 
 ### References 
 
