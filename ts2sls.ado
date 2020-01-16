@@ -1,4 +1,4 @@
-*! version 0.1 December 3, 2015 @ 20:14:15
+*! version 0.1 January 16, 2020 @ 16:49:46
 /*
 ts2sls.ado
 J. SHRADER
@@ -171,45 +171,40 @@ version 12
    qui predict `_u1' if `touse', resid
    mata:_2s_vcv()
 
-
-   matrix list beta
-   matrix list se
+   local allnames "`endogname' `exogname' _cons"
+   *matname beta `endogname' `exogname' "_cons"
+   *matrix list beta
+   *matrix list V
+   matrix b = beta'
+   matname b `allnames', c(.)
+   matname V `allnames'
+   *matrix list se
 
    // Populate ereturn
-   //ereturn post beta V, esample(`touse')
-
-
-/*   // Output results
-   disp as txt " "
-   disp as txt "OLS REGRESSION"
-   disp as txt " "
-   disp as txt "SE CORRECTED FOR CROSS-SECTIONAL SPATIAL DEPENDANCE"
-   disp as txt "             AND PANEL-SPECIFIC SERIAL CORRELATION"
-   disp as txt " "
-   disp as txt "DEPENDANT VARIABLE: `Y'"
-   disp as txt "INDEPENDANT VARIABLES: `X'"
-   disp as txt " "
-   disp as txt "SPATIAL CORRELATION KERNAL CUTOFF: `distcutoff' KM"
+   ereturn clear
+   ereturn post b V, depname(`lhs') esample(`touse')
+   ereturn scalar N1 = `normN1'
+   ereturn scalar N2 = `normN2'
+   ereturn local title "Two-sample two-stage least squares (TS2SLS) regression"
+   ereturn local depvar = "`lhs'"
+   ereturn local exogr "`exogname'"
+   ereturn local insts "`exogname' `instname'"
+   ereturn local instd "`endogname'"
+   ereturn local estimator "ts2sls"
+   ereturn local command "ts2sls"
    
-   disp as txt "SERIAL CORRELATION KERNAL CUTOFF: `lagcutoff' PERIODS"
 
-   ereturn display // standard Stata regression table format
-
-   // displaying different SE if option selected
-
-if "`display'" == "display"{
-	disp as txt " "
-	disp as txt "STANDARD ERRORS UNDER OLS, WITH SPATIAL CORRECTION AND WITH SPATIAL AND SERIAL CORRECTION:"
-	estimates table OLS spatial spatHAC, b(%7.3f) se(%7.3f) t(%7.3f) stats(N r2) 	
-}
-
-if "`star'" == "star"{
-	disp as txt " "
-	disp as txt "STANDARD ERRORS UNDER OLS, WITH SPATIAL CORRECTION AND WITH SPATIAL AND SERIAL CORRECTION:"
-	estimates table OLS spatial spatHAC, b(%7.3f) star(0.10 0.05 0.01)
-}
-*/
-
+   // Output results
+   disp as txt " "
+   disp as txt "Two-sample two-stage least squares (TS2SLS) regression"
+   disp as txt " "
+   disp as txt "Number of obs, group 1 =  `normN1'"
+   disp as txt "Number of obs, group 2 =  `normN2'"
+   disp as txt " "
+   ereturn display
+   disp as txt "Instrumented: `endogname'"
+   disp as txt "Instruments: `instname'"
+   
    /*
    ts2sls price (mpg length = c.weight##c.weight) headroom, group(group) 
    beta[4,1]
