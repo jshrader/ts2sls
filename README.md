@@ -26,7 +26,7 @@ Your datasets need to be stacked, so if you are estimating from two different da
 ```
 
 ### Installation
-You can download ts2sls.ado ([click here](https://github.com/jshrader/ts2sls/archive/master.zip) and place it where Stata can find ado files. For example, you can put it in the t/ directory of your [personal ado folder](http://www.stata.com/support/faqs/programming/personal-ado-directory/). To find your ado folders, issue the command `sysdir` to Stata. Once you have put the code in one of your ado directories, you should simply be able to run it by typing "ts2sls ..." into Stata.
+You can download ts2sls.ado ([click here](https://github.com/jshrader/ts2sls/archive/master.zip)) and place it where Stata can find ado files. For example, you can put it in the t/ directory of your [personal ado folder](http://www.stata.com/support/faqs/programming/personal-ado-directory/). To find your ado folders, issue the command `sysdir` to Stata. Once you have put the code in one of your ado directories, you should simply be able to run it by typing "ts2sls ..." into Stata.
 
 Once this code is reasonably complete, I can put it into a package.
 
